@@ -4,7 +4,6 @@ module ActiveFedora
   class FileConfigurator
 
     # Initializes ActiveFedora's connection to Fedora and Solr based on the info in fedora.yml and solr.yml
-    # NOTE: this deprecates the use of a solr url in the fedora.yml
     #
     # 
     # If Rails.env is set, it will use that environment.  Defaults to "development".
@@ -70,12 +69,6 @@ module ActiveFedora
     def solr_config
       load_configs
       @solr_config
-    end
-
-    def config_reload!
-      ActiveSupport::Deprecation.warn("config_reload! is not supported")
-      reset!
-      load_configs
     end
 
     def path

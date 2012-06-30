@@ -60,11 +60,6 @@ module ActiveFedora
       @datastreams ||= DatastreamHash.new(self)
     end
   
-    def datastreams_in_memory
-      ActiveSupport::Deprecation.warn("ActiveFedora::Base.datastreams_in_memory has been deprecated.  Use #datastreams instead")
-      datastreams
-    end
-
     def configure_datastream(ds, ds_spec=nil)
       ds_spec ||= self.class.ds_specs[ds.instance_variable_get(:@dsid)]
       if ds_spec
@@ -112,34 +107,12 @@ module ActiveFedora
       return datastream.dsid
     end
 
-    def add(datastream) # :nodoc:
-      ActiveSupport::Deprecation.warn "Warning: ActiveFedora::Base.add has been deprecatedand will be removed in 5.0.  Use add_datastream"
-      add_datastream(datastream)
-    end
-    
     #return all datastreams of type ActiveFedora::MetadataDatastream
     def metadata_streams
       results = []
       datastreams.each_value do |ds|
-        if ds.kind_of?(ActiveFedora::MetadataDatastream) || ds.kind_of?(ActiveFedora::NokogiriDatastream)
+        if ds.kind_of?(ActiveFedora::NokogiriDatastream)
           results << ds
-        end
-      end
-      return results
-    end
-    
-    #return all datastreams not of type ActiveFedora::MetadataDatastream 
-    #(that aren't Dublin Core or RELS-EXT streams either)
-    #@deprecated
-    def file_streams
-      ActiveSupport::Deprecation.warn("ActiveFedora::Base#file_streams has been deprecated and will be removed in 5.0")
-      results = []
-      datastreams.each_value do |ds|
-        if !ds.kind_of?(ActiveFedora::MetadataDatastream) && !ds.kind_of?(ActiveFedora::NokogiriDatastream)
-          dsid = ds.dsid
-          if dsid != "DC" && dsid != "RELS-EXT"
-            results << ds
-          end
         end
       end
       return results

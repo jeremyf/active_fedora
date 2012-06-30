@@ -13,14 +13,11 @@ describe ActiveFedora::Base do
       mock_mds1 = mock("metadata ds1")
       mock_mds2 = mock("metadata ds2")
       mock_fds = mock("file ds")
-      mock_fds.expects(:kind_of?).with(ActiveFedora::MetadataDatastream).returns(false)
       mock_ngds = mock("nokogiri ds")
-      mock_ngds.expects(:kind_of?).with(ActiveFedora::MetadataDatastream).returns(false)
       mock_ngds.expects(:kind_of?).with(ActiveFedora::NokogiriDatastream).returns(true)
       
       
       [mock_mds1,mock_mds2].each do |ds|
-        ds.expects(:kind_of?).with(ActiveFedora::MetadataDatastream).returns(false)
         ds.expects(:kind_of?).with(ActiveFedora::NokogiriDatastream).returns(true)
       end
       mock_fds.stubs(:kind_of?).with(ActiveFedora::NokogiriDatastream).returns(false) 
@@ -35,44 +32,6 @@ describe ActiveFedora::Base do
     end
   end
   
-  describe ".file_streams" do
-    #TODO move to datastreams_spec
-    it "should return all of the datastreams from the object that are kinds of SimpleDatastreams" do
-      mock_fds1 = mock("file ds", :dsid => "file1")
-      mock_fds1.expects(:kind_of?).with(ActiveFedora::MetadataDatastream).returns(false)
-      mock_fds1.expects(:kind_of?).with(ActiveFedora::NokogiriDatastream).returns(false)
-      mock_fds2 = mock("file ds", :dsid => "file2")
-      mock_fds2.expects(:kind_of?).with(ActiveFedora::MetadataDatastream).returns(false)
-      mock_fds2.expects(:kind_of?).with(ActiveFedora::NokogiriDatastream).returns(false)
-      mock_mds = mock("metadata ds")
-      mock_mds.expects(:kind_of?).with(ActiveFedora::MetadataDatastream).returns(false)
-      mock_mds.expects(:kind_of?).with(ActiveFedora::NokogiriDatastream).returns(true)
-      @test_object.expects(:datastreams).returns({:foo => mock_fds1, :bar=> mock_fds2, :baz => mock_mds})
-      
-      result = @test_object.file_streams
-      result.length.should == 2
-      result.should include(mock_fds1)
-      result.should include(mock_fds2)
-
-    end
-    it "should skip DC and RELS-EXT datastreams" do
-      mock_fds1 = mock("file ds", :dsid => "foo")
-      mock_fds1.expects(:kind_of?).with(ActiveFedora::MetadataDatastream).returns(false)
-      mock_fds1.expects(:kind_of?).with(ActiveFedora::NokogiriDatastream).returns(false)
-      dc = mock("DC")
-      dc.expects(:kind_of?).with(ActiveFedora::MetadataDatastream).returns(false)
-      dc.expects(:kind_of?).with(ActiveFedora::NokogiriDatastream).returns(true)
-      rels_ext = mock("RELS-EXT")
-      rels_ext.expects(:kind_of?).with(ActiveFedora::MetadataDatastream).returns(false)
-      rels_ext.expects(:kind_of?).with(ActiveFedora::NokogiriDatastream).returns(true)
-      @test_object.expects(:datastreams).returns({:foo => mock_fds1, :dc => dc, :rels_ext => rels_ext})
-      
-      result = @test_object.file_streams
-      result.length.should == 1
-      result.should include(mock_fds1)
-    end
-  end
-
   describe ".update_index" do
     before do
       mock_conn = mock("SolrConnection")
@@ -99,7 +58,6 @@ describe ActiveFedora::Base do
       mock3.expects(:solrize_profile).returns({})
       mock1.expects(:kind_of?).with(ActiveFedora::NokogiriDatastream).returns(true)
       mock2.expects(:kind_of?).with(ActiveFedora::NokogiriDatastream).returns(true)
-      mock3.expects(:kind_of?).with(ActiveFedora::MetadataDatastream).returns(false)
       @test_object.expects(:datastreams).twice.returns(mock_datastreams)
       @test_object.expects(:solrize_relationships)
       @test_object.update_index
@@ -113,7 +71,6 @@ describe ActiveFedora::Base do
       
       mock_datastreams = {:ds1 => mock1, :ds2 => mock2, :rels_ext => mock3}
       mock_datastreams.values.each do |ds| 
-        ds.stubs(:kind_of?).with(ActiveFedora::MetadataDatastream).returns(false)
         ds.stubs(:kind_of?).with(ActiveFedora::NokogiriDatastream).returns(false)
       end
       mock1.expects(:solrize_profile).returns({})

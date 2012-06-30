@@ -533,10 +533,11 @@ describe ActiveFedora::Base do
         subject.adapt_to_cmodel.should === subject
       end
     end
-
-    describe ".to_xml" do
-      it "should provide .to_xml" do
-        @test_object.should respond_to(:to_xml)
+    
+    describe ".to_solr" do
+      after(:all) do
+        # Revert to default mappings after running tests
+        ActiveFedora::SolrService.load_mappings
       end
 
       it "should add pid, system_create_date and system_modified_date from object attributes" do
@@ -546,22 +547,6 @@ describe ActiveFedora::Base do
         solr_doc["system_create_dt"].should eql("2012-03-06T03:12:02Z")
         solr_doc["system_modified_dt"].should eql("2012-03-07T03:12:02Z")
         solr_doc[:id].should eql("#{@test_object.pid}")
-      end
-
-      it "should call .to_xml on all SimpleDatastreams and return the resulting document" do
-        ds1 = ActiveFedora::SimpleDatastream.new(@test_object.inner_object, 'ds1')
-        ds2 = ActiveFedora::SimpleDatastream.new(@test_object.inner_object, 'ds2')
-        [ds1,ds2].each {|ds| ds.expects(:to_xml)}
-
-        @test_object.expects(:datastreams).returns({:ds1 => ds1, :ds2 => ds2})
-        @test_object.to_xml
-      end
-    end
-    
-    describe ".to_solr" do
-      after(:all) do
-        # Revert to default mappings after running tests
-        ActiveFedora::SolrService.load_mappings
       end
       
       it "should provide .to_solr" do
@@ -746,23 +731,6 @@ pending "This is broken, and deprecated.  I don't want to fix it - jcoyne"
         m.datastreams['someData'].fubar.should == ['work', 'bork']
         m.datastreams['withText2'].fubar.should == ['work', 'bork']
       end
-    end
-
-    it "should expose solr for real." do
-      sinmock = mock('solr instance')
-      conmock = mock("solr conn")
-      sinmock.expects(:conn).returns(conmock)
-      conmock.expects(:query).with('pid: foobar', {}).returns({:baz=>:bif})
-      ActiveFedora::SolrService.expects(:instance).returns(sinmock)
-      FooHistory.solr_search("pid: foobar").should == {:baz=>:bif}
-    end
-    it "should expose solr for real. and pass args through" do
-      sinmock = mock('solr instance')
-      conmock = mock("solr conn")
-      sinmock.expects(:conn).returns(conmock)
-      conmock.expects(:query).with('pid: foobar', {:ding => :dang}).returns({:baz=>:bif})
-      ActiveFedora::SolrService.expects(:instance).returns(sinmock)
-      FooHistory.solr_search("pid: foobar", {:ding=>:dang}).should == {:baz=>:bif}
     end
 
     describe '#relationships_by_name' do
