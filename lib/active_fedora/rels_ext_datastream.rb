@@ -32,10 +32,36 @@ module ActiveFedora
     # @tmpl ActiveFedora::MetadataDatastream
     # @node Nokogiri::XML::Node
     def self.from_xml(tmpl, node) 
-      # node.xpath("./foxml:datastreamVersion[last()]/foxml:xmlContent/rdf:RDF/rdf:Description/*").each do |f|
-      node.xpath("./foxml:datastreamVersion[last()]/foxml:xmlContent/rdf:RDF/rdf:Description/*", {"rdf"=>"http://www.w3.org/1999/02/22-rdf-syntax-ns#", "foxml"=>"info:fedora/fedora-system:def/foxml#"}).each do |f|
-          r = ActiveFedora::Relationship.new(:subject=>:self, :predicate=>ActiveFedora::SemanticNode::PREDICATE_MAPPINGS.invert[f.name], :object=>f["resource"])
+      # From Fedora 3.3.x to 3.6.x the order of the foxml:datastreamVersion
+      # changed. Previously (3.3.x) the versions were listed in date ascending
+      # order (i.e. earliest first). In 3.6 this order changed. So instead of
+      # leaning on `xpath("./foxml:datastreamVersion[last()]")` or
+      # `xpath("./foxml:datastreamVersion[1]")`, I am looking via ruby for the
+      # most recent
+      node_to_use = nil
+      node_to_use_created_at = nil
+      node.xpath("./foxml:datastreamVersion").each do |inner_node|
+        node_created_at = Time.parse(inner_node.attribute('CREATED').value)
+        if node_to_use.nil? || node_created_at > node_to_use_created_at
+          node_to_use = inner_node
+          node_to_use_created_at = node_created_at
+        end
+      end
+      if node_to_use
+        node_to_use.xpath("./foxml:xmlContent/rdf:RDF/rdf:Description/*", {"rdf"=>"http://www.w3.org/1999/02/22-rdf-syntax-ns#", "foxml"=>"info:fedora/fedora-system:def/foxml#"}).each do |f|
+          if f.namespace
+            ns_mapping = self.predicate_mappings[f.namespace.href]
+            predicate = ns_mapping ?  ns_mapping.invert[f.name] : nil
+            predicate = "#{f.namespace.prefix}_#{f.name}" if predicate.nil?
+          else
+            logger.warn "You have a predicate without a namespace #{f.name}. Verify your rels-ext is correct."
+            predicate = "#{f.name}"
+          end
+          is_obj = f["resource"]
+          object = is_obj ? f["resource"] : f.inner_text
+          r = ActiveFedora::Relationship.new(:subject=>:self, :predicate=>predicate, :object=>object, :is_literal=>!is_obj)
           tmpl.add_relationship(r)
+        end
       end
       tmpl.send(:dirty=, false)
       tmpl
