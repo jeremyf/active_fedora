@@ -133,9 +133,20 @@ module ActiveFedora
     # Populate a MetadataDatastream object based on the "datastream" node from a FOXML file
     # @param [ActiveFedora::Datastream] tmpl the Datastream object that you are building
     # @param [Nokogiri::XML::Node] node the "foxml:datastream" node from a FOXML file.  Assumes that the content of this datastream is that of an ActiveFedora MetadataDatastream (<fields>...</fields>)
-    def self.from_xml(tmpl, node) # :nodoc:
-      node.xpath("./foxml:datastreamVersion[last()]/foxml:xmlContent/fields/node()").each do |f|
+    def self.from_xml(tmpl, node) # :nodoc:      node_to_use = nil
+      node_to_use = nil
+      node_to_use_created_at = nil
+      node.xpath("./foxml:datastreamVersion").each do |inner_node|
+        node_created_at = Time.parse(inner_node.attribute('CREATED').value)
+        if node_to_use.nil? || node_created_at > node_to_use_created_at
+          node_to_use = inner_node
+          node_to_use_created_at = node_created_at
+        end
+      end
+      if node_to_use
+        node_to_use.xpath("./foxml:xmlContent/fields/node()").each do |f|
           tmpl.send("#{f.name}_append", f.text) unless f.class == Nokogiri::XML::Text
+        end
       end
       tmpl.send(:dirty=, false)
       tmpl
