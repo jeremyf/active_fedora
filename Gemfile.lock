@@ -37,6 +37,7 @@ GEM
       nokogiri
       om
       solr-ruby
+    solrizer-fedora (0.1.0)
     xml-simple (1.0.14)
 
 PLATFORMS
@@ -55,4 +56,5 @@ DEPENDENCIES
   ruby-debug
   solr-ruby (>= 0.0.6)
   solrizer (>= 0.3.0)
+  solrizer-fedora (= 0.1.0)
   xml-simple (>= 1.0.12)
