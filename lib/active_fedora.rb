@@ -81,6 +81,7 @@ module ActiveFedora #:nodoc:
     autoload :SimpleDatastream
     autoload :SolrDigitalObject
     autoload :SolrService
+    autoload :ConditionsToSolrQueryBuilder
     autoload :UnsavedDigitalObject
     autoload :FixtureLoader
     autoload :FixtureExporter

@@ -201,51 +201,7 @@ module ActiveFedora
     # Returns a solr query for the supplied conditions
     # @param[Hash] conditions solr conditions to match
     def create_query(conditions)
-        case conditions
-        when Hash
-          build_query([create_query_from_hash(conditions)])
-        when String
-          build_query(["(#{conditions})"])
-        else
-          build_query(conditions)
-        end
-    end
-
-    def build_query(conditions)
-      clauses = search_model_clause ?  [search_model_clause] : []
-      clauses += conditions.reject{|c| c.blank?}
-      return "*:*" if clauses.empty?
-      clauses.compact.join(" AND ")
-    end
-
-    def create_query_from_hash(conditions)
-      conditions.map {|key,value| condition_to_clauses(key, value)}.compact.join(" AND ")
-    end
-
-    def condition_to_clauses(key, value)
-      unless value.nil?
-        # if the key is a property name, turn it into a solr field
-        if @klass.defined_attributes.key?(key)
-          # TODO Check to see if `key' is a possible solr field for this class, if it isn't try :searchable instead
-          key = ActiveFedora::SolrService.solr_name(key, :stored_searchable, type: :string)
-        end
-
-        if value.empty?
-          "-#{key}:['' TO *]"
-        elsif value.is_a? Array
-          value.map { |val| "#{key}:#{RSolr.escape(val)}" }
-        else
-          key = SOLR_DOCUMENT_ID if (key === :id || key === :pid)
-          "#{key}:#{RSolr.escape(value)}"
-        end
-      end
-    end
-
-    # Return the solr clause that queries for this type of class
-    def search_model_clause
-      unless @klass == ActiveFedora::Base
-        return ActiveFedora::SolrService.construct_query_for_rel(:has_model => @klass.to_class_uri)
-      end
+      ActiveFedora::ConditionsToSolrQueryBuilder.call(conditions, @klass)
     end
 
   end

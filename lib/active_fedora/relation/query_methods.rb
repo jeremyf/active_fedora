@@ -66,7 +66,7 @@ module ActiveFedora
       return [] if values.blank?
       case values
       when Hash
-        [create_query_from_hash(values)]
+        [ConditionsToSolrQueryBuilder.create_query_from_hash(values, @klass)]
       when String
         ["(#{values})"]
       else
